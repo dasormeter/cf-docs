@@ -8,6 +8,10 @@
     "traffic parameters": "/global-synchronizer/deployment/synchronizer-traffic#traffic-parameters",
     "traffic_accounting": "/global-synchronizer/deployment/synchronizer-traffic#traffic-accounting-what-counts-as-traffic"
   },
+  "urlSubstitutions": {
+    "https://docs.daml.com/canton/usermanual/kms/kms_aws_setup.html": "[Canton KMS operations](/global-synchronizer/production-operations/kms-operations#configure-a-amazon-web-services-aws-kms)",
+    "https://docs.daml.com/canton/usermanual/kms/kms_gcp_setup.html": "[Canton KMS operations](/global-synchronizer/production-operations/kms-operations#configure-a-google-cloud-provider-gcp-kms)"
+  },
   "snippets": [
     {
       "snippetName": "splice-literal-full-apps-app-src-pack-examples-recovery-manual-identities-dump",
@@ -19,6 +23,30 @@
       "description": "",
       "options": {
         "language": "scala"
+      }
+    },
+    {
+      "snippetName": "splice-literal-full-apps-app-src-pack-examples-sv-helm-kms-participant-aws-values",
+      "sourceRepo": "splice",
+      "sourceFilepath": "apps/app/src/pack/examples/sv-helm/kms-participant-aws-values.yaml",
+      "location": {
+        "type": "fullFile"
+      },
+      "description": "",
+      "options": {
+        "language": "yaml"
+      }
+    },
+    {
+      "snippetName": "splice-literal-full-apps-app-src-pack-examples-sv-helm-kms-participant-gcp-values",
+      "sourceRepo": "splice",
+      "sourceFilepath": "apps/app/src/pack/examples/sv-helm/kms-participant-gcp-values.yaml",
+      "location": {
+        "type": "fullFile"
+      },
+      "description": "",
+      "options": {
+        "language": "yaml"
       }
     },
     {
