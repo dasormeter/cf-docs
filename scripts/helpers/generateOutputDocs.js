@@ -209,8 +209,34 @@ function applyIndentOption(content, normalizeIndentOption) {
     return normalizeIndent(content)
 }
 
+/** Default indent mode when options.normalizeIndent is omitted. */
+function defaultNormalizeIndent(location) {
+    switch (location && location.type) {
+        case 'fullFile':
+        case 'stringMarker':
+            return 'baseline'
+        default:
+            return true
+    }
+}
+
 function trimBlankEdges(content) {
     return content.replace(/^\s*\n+/, '').replace(/\n+\s*$/, '')
+}
+
+/** Replace literal substrings (e.g. legacy docs.daml.com URLs in YAML comments). */
+function applyUrlSubstitutions(content, globalSubstitutions, snippetSubstitutions) {
+    const merged = {
+        ...(globalSubstitutions || {}),
+        ...(snippetSubstitutions || {}),
+    }
+    const keys = Object.keys(merged)
+    if (keys.length === 0) return content
+    let result = content
+    for (const from of keys) {
+        result = result.split(from).join(merged[from])
+    }
+    return result
 }
 
 function convertRstBlocksToMarkdown(content, fallbackLanguage = '') {
@@ -361,11 +387,19 @@ function processSnippet(snippet, verbose, globalOptions = {}) {
             ? extractedContent
             : applyIndentOption(
                   extractedContent,
-                  indentOpt === undefined ? true : indentOpt
+                  indentOpt === undefined
+                      ? defaultNormalizeIndent(snippet.location)
+                      : indentOpt
               )
 
-        const formattedContent = formatSnippetContent(
+        const substitutedContent = applyUrlSubstitutions(
             normalizedContent,
+            globalOptions.urlSubstitutions,
+            snippet.options && snippet.options.urlSubstitutions
+        )
+
+        const formattedContent = formatSnippetContent(
+            substitutedContent,
             snippet.options || {},
             globalOptions
         )
@@ -410,6 +444,7 @@ function main() {
 
         const globalOptions = {
             rstIncludeRefTargets: config.rstIncludeRefTargets || {},
+            urlSubstitutions: config.urlSubstitutions || {},
         }
 
         for (const snippet of config.snippets) {
