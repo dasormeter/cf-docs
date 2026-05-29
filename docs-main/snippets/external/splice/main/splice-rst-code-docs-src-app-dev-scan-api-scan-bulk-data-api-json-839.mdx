@@ -1,0 +1,21 @@
+```json
+              ],
+              "senderChangeFee": "0E-10",
+              "senderChangeAmount": "0E-10",
+              "amuletPrice": "0.0050000000",
+              "inputValidatorFaucetAmount": "0E-10"
+            },
+            "createdAmulets": "<...>",
+            "senderChangeAmulet": null
+          },
+          "consuming": false,
+          "acting_parties": "<...>",
+          "interface_id": null
+        },
+
+The two sources of coin burn in this transaction are:
+
+- A temporary coin contract is created and immediately burnt as part of this transaction,
+  for the payment for the CNS itself. To find the amount burnt, look at the Amulet contract ID
+  in the ``exercise_result`` field of the ``SubscriptionInitialPayment_Collect`` choice
+```

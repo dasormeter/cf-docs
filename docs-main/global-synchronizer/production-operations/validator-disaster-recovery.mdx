@@ -3,7 +3,7 @@ title: "Validator Disaster Recovery"
 description: "Disaster recovery and restore procedures for validator nodes"
 ---
 
-import ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryBash137 from "/snippets/external/splice/main/splice-rst-code-docs-src-validator-operator-validator-disaster-recovery-bash-137.mdx";
+import ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryBash140 from "/snippets/external/splice/main/splice-rst-code-docs-src-validator-operator-validator-disaster-recovery-bash-140.mdx";
 import ExternalSpliceMainSpliceRstLiteralMarkerAppsAppSrcPackExamplesSvHelmStandaloneValidatorValuesParticipantBootstrapMigrateToNewParticipantStart from "/snippets/external/splice/main/splice-literal-marker-apps-app-src-pack-examples-sv-helm-standalone-validator-values-participant-bootstrap-migrate-to-new-participant-start.mdx";
 import ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryYaml185 from "/snippets/external/splice/main/splice-rst-code-docs-src-validator-operator-validator-disaster-recovery-yaml-185.mdx";
 import ExternalSpliceMainSpliceRstLiteralFullAppsAppSrcPackExamplesRecoveryManualIdentitiesDump from "/snippets/external/splice/main/splice-literal-full-apps-app-src-pack-examples-recovery-manual-identities-dump.mdx";
@@ -13,10 +13,10 @@ import ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterR
 import ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryNone299 from "/snippets/external/splice/main/splice-rst-code-docs-src-validator-operator-validator-disaster-recovery-none-299.mdx";
 import ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryNone314 from "/snippets/external/splice/main/splice-rst-code-docs-src-validator-operator-validator-disaster-recovery-none-314.mdx";
 import ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryNone264 from "/snippets/external/splice/main/splice-rst-code-docs-src-validator-operator-validator-disaster-recovery-none-264.mdx";
-import ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryNone309 from "/snippets/external/splice/main/splice-rst-code-docs-src-validator-operator-validator-disaster-recovery-none-309.mdx";
-import ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryNone351 from "/snippets/external/splice/main/splice-rst-code-docs-src-validator-operator-validator-disaster-recovery-none-351.mdx";
-import ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryNone373 from "/snippets/external/splice/main/splice-rst-code-docs-src-validator-operator-validator-disaster-recovery-none-373.mdx";
-import ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryNone405 from "/snippets/external/splice/main/splice-rst-code-docs-src-validator-operator-validator-disaster-recovery-none-405.mdx";
+import ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryNone355 from "/snippets/external/splice/main/splice-rst-code-docs-src-validator-operator-validator-disaster-recovery-none-355.mdx";
+import ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryNone397 from "/snippets/external/splice/main/splice-rst-code-docs-src-validator-operator-validator-disaster-recovery-none-397.mdx";
+import ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryNone419 from "/snippets/external/splice/main/splice-rst-code-docs-src-validator-operator-validator-disaster-recovery-none-419.mdx";
+import ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryNone451 from "/snippets/external/splice/main/splice-rst-code-docs-src-validator-operator-validator-disaster-recovery-none-451.mdx";
 
 import { NetworkVariables } from '/snippets/components/version.mdx';
 import { networkData } from '/snippets/generated/version-dashboard-data.mdx';
@@ -90,7 +90,7 @@ To re-onboard a validator in a Kubernetes deployment and recover the balances of
 
 - Create a Kubernetes secret with the content of the identities backup file. Assuming you set the environment variable `PARTICIPANT_BOOTSTRAP_DUMP_FILE` to a backup file path, you can create the secret with the following command:
 
-<ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryBash137 />
+<ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryBash140 />
 
 - Uncomment the following lines in the `standalone-validator-values.yaml` file. This will specify a new participant ID for the validator. Replace `put-some-new-string-never-used-before` with a string that was never used before. Make sure to also adjust `nodeIdentifier` to match the same value.
 
@@ -215,7 +215,7 @@ We now need to sign and submit the topology transaction to host the external par
 
 To do so, first generate the topology transaction. Note that the instructions here assume that the party is only hosted on a single participant node. If you want to host it on multiple nodes, you will need to adjust this.
 
-<ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryNone309 />
+<ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryNone355 />
 
 We'll need the topology transaction and the definitions defined here later again. Either keep your Canton console open or save them.
 
@@ -227,7 +227,7 @@ After you signed it externally, you need to construct the signed topology transa
 
 We can now check that the topology transaction got correctly applied and get the `validFrom` time:
 
-<ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryNone373 />
+<ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryNone419 />
 
 In this example, the validFrom time is `2025-05-14T10:19:33.534074Z`.
 
@@ -237,7 +237,7 @@ We can now query CC Scan to get the active contract set (ACS) for a party and wr
 
 Lastly, we can import the ACS:
 
-<ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryNone405 />
+<ExternalSpliceMainSpliceRstCodeDocsSrcValidatorOperatorValidatorDisasterRecoveryNone451 />
 
 The party is now hosted on the node and can participat in transactions. The last step is to setup the necessary contracts to allow the validator automation to renew transfer preapprovals and complete transfer commands. To do so, go through the same flow used for initial onboarding of the party, i.e., `/v0/admin/external-party/setup-proposal`, `/v0/admin/external-party/setup-proposal/prepare-accept` and `/v0/admin/external-party/setup-proposal/submit-accept`. For details refer to the docs for the validator external signing API.
 
