@@ -333,6 +333,7 @@ function formatSnippetContent(content, options, globalOptions = {}) {
 
     switch (displayStyle) {
         case 'wrapCode':
+            body = trimBlankEdges(body)
             if (language) {
                 return `\`\`\`${language}\n${body}\n\`\`\``
             } else {

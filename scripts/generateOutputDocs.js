@@ -8,9 +8,10 @@
 
 const fs = require('fs')
 const path = require('path')
+const { convertRstIncludeToMdx } = require('./helpers/rstIncludeToMdx')
 
-const REPO_ROOT = path.join(__dirname, '..', '..')
-const EXPORT_CONFIG_PATH = path.join(REPO_ROOT, 'scripts/docs/exportConfig.json')
+const REPO_ROOT = path.join(__dirname, '..')
+const EXPORT_CONFIG_PATH = path.join(REPO_ROOT, 'config/snippet-config/splice-snippet-list-remote.json')
 const OUTPUT_FOLDER_PATH = path.join(REPO_ROOT, 'docs-output')
 
 function readFileContent(filePath) {
@@ -52,13 +53,25 @@ function extractByStringMarker(fileContent, startMarker, endMarker) {
         throw new Error(`Start marker not found: "${startMarker}"`)
     }
 
-    const contentStart = startIndex + startMarker.length
+    // Match Sphinx literalinclude :start-after: / :end-before: — exclude marker lines.
+    let contentStart = fileContent.indexOf('\n', startIndex)
+    if (contentStart === -1) {
+        contentStart = startIndex + startMarker.length
+    } else {
+        contentStart += 1
+    }
+
     const endIndex = fileContent.indexOf(endMarker, contentStart)
     if (endIndex === -1) {
         throw new Error(`End marker not found: "${endMarker}"`)
     }
 
-    return fileContent.substring(contentStart, endIndex).trim()
+    let contentEnd = fileContent.lastIndexOf('\n', endIndex)
+    if (contentEnd < contentStart) {
+        contentEnd = endIndex
+    }
+
+    return fileContent.substring(contentStart, contentEnd).trim()
 }
 
 function extractByRegexWrap(fileContent, startRegex, endRegex) {
@@ -175,8 +188,55 @@ function normalizeIndent(content) {
         .join('\n')
 }
 
+/** Strip common leading indent only; first line starts at column 0 (HOCON/config in RST). */
+function baselineIndent(content) {
+    const lines = content.split('\n')
+    let minIndent = null
+    for (const line of lines) {
+        if (line.trim() === '') continue
+        const indent = (line.match(/^(\s*)/) || ['', ''])[1].length
+        if (minIndent === null || indent < minIndent) minIndent = indent
+    }
+    const strip = minIndent ?? 0
+    return lines
+        .map((line) => (line.trim() === '' ? '' : line.slice(strip)))
+        .join('\n')
+}
+
+function applyIndentOption(content, normalizeIndentOption) {
+    if (normalizeIndentOption === false) return content
+    if (normalizeIndentOption === 'baseline') return baselineIndent(content)
+    return normalizeIndent(content)
+}
+
+/** Default indent mode when options.normalizeIndent is omitted. */
+function defaultNormalizeIndent(location) {
+    switch (location && location.type) {
+        case 'fullFile':
+        case 'stringMarker':
+            return 'baseline'
+        default:
+            return true
+    }
+}
+
 function trimBlankEdges(content) {
     return content.replace(/^\s*\n+/, '').replace(/\n+\s*$/, '')
+}
+
+/** Replace literal substrings (e.g. legacy docs.daml.com URLs in YAML comments). */
+function applyUrlSubstitutions(content, globalSubstitutions, snippetSubstitutions) {
+    const merged = {
+        ...(globalSubstitutions || {}),
+        ...(snippetSubstitutions || {}),
+    }
+    const keys = Object.keys(merged)
+    if (keys.length === 0) return content
+    let result = content
+    for (const from of keys) {
+        result = result.split(from).join(merged[from])
+    }
+    return result
 }
 
 function convertRstBlocksToMarkdown(content, fallbackLanguage = '') {
@@ -249,10 +309,22 @@ function convertRstBlocksToMarkdown(content, fallbackLanguage = '') {
     return out.join('\n')
 }
 
-function formatSnippetContent(content, options) {
+function formatSnippetContent(content, options, globalOptions = {}) {
+    let body = content
+    if (options && options.unescapeRstQuotes) {
+        body = body.replace(/\\'/g, "'")
+    }
+    if (options && options.transform === 'rstinclude') {
+        return convertRstIncludeToMdx(body, {
+            refTargets: {
+                ...(globalOptions.rstIncludeRefTargets || {}),
+                ...(options.refTargets || {}),
+            },
+        })
+    }
     if (options && options.transform === 'rstjson') {
         const language = options && options.language ? options.language : ''
-        return convertRstBlocksToMarkdown(content, language)
+        return convertRstBlocksToMarkdown(body, language)
     }
     const displayStyle = (options && options.displayStyle) || 'wrapCode'
     const rawLanguage = options && options.language ? options.language : ''
@@ -261,10 +333,11 @@ function formatSnippetContent(content, options) {
 
     switch (displayStyle) {
         case 'wrapCode':
+            body = trimBlankEdges(body)
             if (language) {
-                return `\`\`\`${language}\n${content}\n\`\`\``
+                return `\`\`\`${language}\n${body}\n\`\`\``
             } else {
-                return `\`\`\`\n${content}\n\`\`\``
+                return `\`\`\`\n${body}\n\`\`\``
             }
 
         default:
@@ -282,7 +355,7 @@ function getSourceFilePath(snippet) {
     }
 }
 
-function processSnippet(snippet, verbose) {
+function processSnippet(snippet, verbose, globalOptions = {}) {
     try {
         if (verbose) {
             console.log(`Processing snippet: ${snippet.snippetName}`)
@@ -306,20 +379,30 @@ function processSnippet(snippet, verbose) {
             fileContent,
             snippet.location
         )
-        const skipNormalizeIndent =
+        const skipTransform =
             snippet.options &&
-            snippet.options.transform !== 'rstjson' &&
-            snippet.options.normalizeIndent === false
-        const normalizedContent =
-            snippet.options && snippet.options.transform === 'rstjson'
-                ? extractedContent
-                : skipNormalizeIndent
-                  ? extractedContent
-                  : normalizeIndent(extractedContent)
+            (snippet.options.transform === 'rstjson' ||
+                snippet.options.transform === 'rstinclude')
+        const indentOpt = snippet.options?.normalizeIndent
+        const normalizedContent = skipTransform
+            ? extractedContent
+            : applyIndentOption(
+                  extractedContent,
+                  indentOpt === undefined
+                      ? defaultNormalizeIndent(snippet.location)
+                      : indentOpt
+              )
+
+        const substitutedContent = applyUrlSubstitutions(
+            normalizedContent,
+            globalOptions.urlSubstitutions,
+            snippet.options && snippet.options.urlSubstitutions
+        )
 
         const formattedContent = formatSnippetContent(
-            normalizedContent,
-            snippet.options || {}
+            substitutedContent,
+            snippet.options || {},
+            globalOptions
         )
 
         const outputFileName = `${snippet.snippetName}.mdx`
@@ -360,9 +443,14 @@ function main() {
         let successCount = 0
         let errorCount = 0
 
+        const globalOptions = {
+            rstIncludeRefTargets: config.rstIncludeRefTargets || {},
+            urlSubstitutions: config.urlSubstitutions || {},
+        }
+
         for (const snippet of config.snippets) {
             try {
-                processSnippet(snippet, verbose)
+                processSnippet(snippet, verbose, globalOptions)
                 successCount++
             } catch (error) {
                 errorCount++
